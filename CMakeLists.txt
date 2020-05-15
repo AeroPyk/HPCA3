@@ -6,8 +6,8 @@ set(CMAKE_C_STANDARD 99)
 
 find_package(MPI REQUIRED) # define MPI function
 
-add_executable(main main.c)
-add_executable(Ex1 Exercise1.c)
+add_executable(main Ex1/main.c)
+add_executable(Ex1 Ex1/Exercise1.c)
 
 target_link_libraries(main ${MPI_LIBRARIES})
 target_link_libraries(Ex1 ${MPI_LIBRARIES})

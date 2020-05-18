@@ -43,26 +43,18 @@ int main(int argc, char* argv[])
     // Estimate Pi and display the result
     pi = ((double)count / (double)NUM_ITER) * 4.0;
 
-    MPI_Group groupe, new_groupe;
-    MPI_Comm_group(MPI_COMM_WORLD, &groupe);
     
     if(rank == 0){
         MPI_Win win;
         double* results;
         MPI_Win_allocate(size*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &results, &win); //allocate memory and expose it in RMA
 
-        int* index;
-        index = malloc(sizeof(int)*(size-1));
-        int i;
-        for(i=1;i<size;i++)
-            index[i]=i;
-        MPI_Group_incl(groupe, size-1, index, &new_groupe);
-        
-        MPI_Win_post(new_groupe, 0, win);
-        MPI_Win_wait(win);
+        MPI_Win_fence(0, win);
+        MPI_Win_fence(0, win);
 
         double global_result=0;
         results[0] = pi;
+        int i;
         for(i=0;i<size;i++){
             global_result+=results[i];
         }
@@ -78,12 +70,9 @@ int main(int argc, char* argv[])
         MPI_Win_create(&expose, sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win); //expose pi to RMA
         expose = pi;
 
-        int oui=0;
-        MPI_Group_incl(groupe, 1, &oui, &new_groupe);
-
-        MPI_Win_start(new_groupe, 0, win);
+        MPI_Win_fence(0, win);
         MPI_Put(&expose, 1, MPI_DOUBLE, 0, rank, size, MPI_DOUBLE, win); //put pi in 0's RMA
-        MPI_Win_complete(win);
+        MPI_Win_fence(0, win);
 
         MPI_Win_free(&win); //close window
     }
